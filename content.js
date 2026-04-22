@@ -133,11 +133,11 @@
       <button class="close-btn" id="__claude-close">✕</button>
     </div>
     <div class="nav-row">
-      <button class="nav-btn" id="__claude-nav-parent">↑ Pai</button>
+      <button class="nav-btn" id="__claude-nav-parent">↑ Parent</button>
     </div>
     <div class="breadcrumb" id="__claude-breadcrumb"></div>
     <div class="snippet" id="__claude-snippet"></div>
-    <button class="copy-btn" id="__claude-copy">Copiar contexto para Claude</button>
+    <button class="copy-btn" id="__claude-copy">Copy context to Claude</button>
   `;
   document.body.appendChild(panel);
 
@@ -280,7 +280,7 @@
       if (end < currentStack.length) crumbs.push('…');
       breadcrumbEl.innerHTML = crumbs.join(' › ');
     } else {
-      breadcrumbEl.innerHTML = `<span style="color:#484f58">DOM puro — sem componente React</span>`;
+      breadcrumbEl.innerHTML = `<span style="color:#484f58">Plain DOM — no React component</span>`;
     }
 
     // DOM info (shared for both modes)
@@ -295,14 +295,14 @@
     let snippet = '';
     if (hasReact) {
       const parent = currentStack[currentIndex + 1];
-      snippet += `[Componente: <${item.name}>]\n`;
-      if (item.file) snippet += `Arquivo: ${item.file}\n`;
-      if (parent)    snippet += `Pai: <${parent.name}>\n`;
+      snippet += `[Component: <${item.name}>]\n`;
+      if (item.file) snippet += `File: ${item.file}\n`;
+      if (parent)    snippet += `Parent: <${parent.name}>\n`;
     } else {
-      snippet += `[Elemento DOM]\n`;
+      snippet += `[DOM Element]\n`;
     }
 
-    snippet += `Rota: ${window.location.pathname}\n`;
+    snippet += `Route: ${window.location.pathname}\n`;
     snippet += `URL: ${window.location.href}\n`;
 
     if (tag) {
@@ -313,7 +313,7 @@
       domLine += '>';
       snippet += domLine + '\n';
     }
-    if (cssPath) snippet += `Seletor: ${cssPath}\n`;
+    if (cssPath) snippet += `Selector: ${cssPath}\n`;
     if (htmlSnippet) snippet += `\nHTML:\n${htmlSnippet}`;
 
     document.getElementById('__claude-snippet').textContent = snippet;
@@ -333,7 +333,7 @@
     }
 
     const btn = document.getElementById('__claude-copy');
-    btn.textContent = 'Copiar contexto para Claude';
+    btn.textContent = 'Copy context to Claude';
     btn.classList.remove('ok');
 
     panel.classList.add('show');
@@ -359,10 +359,10 @@
     const text = document.getElementById('__claude-snippet').textContent;
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.getElementById('__claude-copy');
-      btn.textContent = '✓ Copiado!';
+      btn.textContent = '✓ Copied!';
       btn.classList.add('ok');
       setTimeout(() => {
-        btn.textContent = 'Copiar contexto para Claude';
+        btn.textContent = 'Copy context to Claude';
         btn.classList.remove('ok');
       }, 2000);
     });
@@ -413,15 +413,15 @@
         <div class="comp">&lt;${top.name}&gt;</div>
         ${top.file ? `<div class="file">${top.file}</div>` : ''}
         ${stack[1] ? `<div class="hint">em &lt;${stack[1].name}&gt;</div>` : ''}
-        <div class="hint" style="margin-top:6px">clique para selecionar</div>`;
+        <div class="hint" style="margin-top:6px">click to select</div>`;
     } else {
       const tag = el.tagName.toLowerCase();
       const id = el.id ? `#${el.id}` : '';
       const cls = [...el.classList].slice(0, 2).map(c => `.${c}`).join('');
       tooltip.innerHTML = `
         <div class="comp">&lt;${tag}${id}${cls}&gt;</div>
-        <div class="hint">elemento DOM</div>
-        <div class="hint" style="margin-top:6px">clique para selecionar</div>`;
+        <div class="hint">DOM element</div>
+        <div class="hint" style="margin-top:6px">click to select</div>`;
     }
 
     const tx = Math.min(e.clientX + 14, window.innerWidth - 360);
@@ -466,6 +466,6 @@
     }
   };
 
-  console.log('%c Claude Selector ativo ', 'background:#1f6feb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:bold');
-  console.log('Cole o script de novo para desativar.');
+  console.log('%c Claude Selector active ', 'background:#1f6feb;color:#fff;padding:4px 8px;border-radius:4px;font-weight:bold');
+  console.log('Click the extension icon again to deactivate.');
 })();
