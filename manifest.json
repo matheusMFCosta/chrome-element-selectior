@@ -1,14 +1,14 @@
 {
   "manifest_version": 3,
-  "name": "Claude Element Selector",
-  "version": "1.0.0",
-  "description": "Selecione componentes React e copie contexto para o Claude",
+  "name": "Element Inspector",
+  "version": "2.0.0",
+  "description": "Inspect React components and DOM elements. Select multiple, add notes, copy context.",
   "permissions": ["activeTab", "scripting", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
   "background": {
     "service_worker": "background.js"
   },
   "action": {
-    "default_title": "Claude Element Selector"
+    "default_title": "Element Inspector"
   }
 }
