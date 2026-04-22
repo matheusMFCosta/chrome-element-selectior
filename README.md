@@ -1,14 +1,16 @@
-# Chrome Element Selector
+# Element Inspector
 
-A Chrome extension to inspect React components and DOM elements, generating context snippets ready to paste into Claude.
+A Chrome extension to inspect React components and DOM elements. Select multiple elements, add notes, and copy structured context in one click.
 
 ## Features
 
-- **Hover** over any element to see its React component name and source file
-- **Click** to lock the selection and open the context panel
-- **↑ Parent** button to walk up the DOM tree
-- Works with **React components** (shows name, file, parent) and **plain DOM elements** (shows tag, id, classes, CSS selector)
-- **One-click copy** — generates a structured snippet to paste directly into Claude
+- **Picking mode** — hover shows a blue highlight and tooltip with the React component name and source file
+- **Multi-select** — click elements one by one; each gets a persistent orange highlight with a numbered label on screen
+- **↑ Parent** per item — navigate any selection up the DOM tree without losing others
+- **Notes** — write a note on each selected element before copying
+- **Clear** — remove all selections at once
+- **Copy All** — copies every selection as a structured block, ready to paste into any AI tool
+- Works with **React components** (name, file, parent component) and **plain DOM elements** (tag, id, classes, CSS selector, HTML snippet)
 
 ## Installation
 
@@ -23,26 +25,33 @@ A Chrome extension to inspect React components and DOM elements, generating cont
 
 ## Usage
 
-1. Navigate to any webpage (works on `localhost` and production sites)
-2. Click the **Claude Element Selector** icon in your toolbar
-3. Hover over elements — a tooltip shows the React component and source file
-4. Click an element to lock the selection (selector deactivates, orange highlight appears)
-5. Use **↑ Parent** to navigate to the parent HTML element
-6. Click **Copy context to Claude** and paste the snippet into your conversation
+1. Navigate to any webpage
+2. Click the **Element Inspector** icon — the panel opens and picking mode activates automatically
+3. Hover over elements to preview component info in the tooltip
+4. **Click an element** — it gets added to the list with a numbered orange highlight on the page
+5. Click **+ Add Element** to pick another element
+6. Use **↑ Parent** on any item to move its selection up the DOM tree
+7. Add optional notes to each selection
+8. Click **Copy All** and paste the result into your conversation
 
 ## Screenshots
 
-### Hovering — tooltip shows component name and file
+### Picking mode — hover shows component and file
 ![Hover state](images/demo-hover.svg)
 
-### Selected — panel with full context ready to copy
+### Multi-select — persistent highlights, notes, and copy
 ![Selection panel](images/demo-panel.svg)
 
 ## Snippet format
 
-When you copy context, the snippet looks like this:
+Each selection is separated and labeled. With multiple elements:
 
 ```
+────────────────────────────────────────
+Selection 1: <InvoiceRow>
+────────────────────────────────────────
+Note: the empty state here is broken
+
 [Component: <InvoiceRow>]
 File: src/pages/invoices/components/invoice-row.tsx:8
 Parent: <InvoicesTable>
@@ -52,12 +61,19 @@ DOM: <tr class="invoice-row">
 Selector: table > tbody > tr
 
 HTML:
-<tr class="invoice-row"><td>Jan 12, 2026</td>…
+<tr class="invoice-row"><td>Jan 12…
+
+────────────────────────────────────────
+Selection 2: <InvoicesTable>
+────────────────────────────────────────
+[Component: <InvoicesTable>]
+File: src/pages/invoices/components/invoices-table.tsx:12
+...
 ```
 
 ## How it works
 
-The extension injects a content script that reads React's internal fiber tree (`__reactFiber$`) directly from DOM nodes to resolve component names and source locations — no build plugin or source map configuration required.
+The extension injects a content script that reads React's internal fiber tree (`__reactFiber$`) directly from DOM nodes to resolve component names and source file locations — no build plugin or source map configuration required. Works on both development and production builds (production builds may have minified component names).
 
 ## License
 

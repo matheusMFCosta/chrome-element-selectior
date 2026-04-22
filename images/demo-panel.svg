@@ -1,92 +1,107 @@
-<svg width="840" height="500" viewBox="0 0 840 500" xmlns="http://www.w3.org/2000/svg" font-family="'SF Mono', 'Fira Code', monospace">
-  <!-- Background -->
-  <rect width="840" height="500" fill="#0d1117"/>
+<svg width="940" height="540" viewBox="0 0 940 540" xmlns="http://www.w3.org/2000/svg" font-family="'SF Mono','Fira Code',monospace">
+  <rect width="940" height="540" fill="#0d1117"/>
 
   <!-- Browser chrome -->
-  <rect width="840" height="40" fill="#161b22"/>
-  <rect x="0" y="39" width="840" height="1" fill="#21262d"/>
-  <rect x="180" y="10" width="480" height="22" rx="4" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
-  <text x="420" y="25" text-anchor="middle" fill="#484f58" font-size="11">localhost:3000/invoices</text>
+  <rect width="940" height="40" fill="#161b22"/>
+  <rect x="0" y="39" width="940" height="1" fill="#21262d"/>
+  <rect x="200" y="10" width="540" height="22" rx="4" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="470" y="25" text-anchor="middle" fill="#484f58" font-size="11">localhost:3000/invoices</text>
   <circle cx="20" cy="20" r="6" fill="#f85149" opacity="0.7"/>
   <circle cx="40" cy="20" r="6" fill="#ffa657" opacity="0.7"/>
   <circle cx="60" cy="20" r="6" fill="#3fb950" opacity="0.7"/>
 
-  <!-- Badge top-right (OFF state) -->
-  <rect x="700" y="54" width="126" height="22" rx="11" fill="#21262d"/>
-  <text x="763" y="69" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="600">⬡ Selector OFF</text>
+  <!-- Badge — off -->
+  <rect x="796" y="52" width="128" height="22" rx="11" fill="#21262d"/>
+  <text x="860" y="67" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="600">⬡ Element Selector</text>
 
-  <!-- Page sidebar -->
-  <rect x="0" y="40" width="180" height="460" fill="#0d1117"/>
-  <rect x="179" y="40" width="1" height="460" fill="#21262d"/>
+  <!-- Sidebar -->
+  <rect x="0" y="40" width="180" height="500" fill="#0d1117"/>
+  <rect x="179" y="40" width="1" height="500" fill="#21262d"/>
   <rect x="16" y="70" width="148" height="32" rx="6" fill="#1f6feb22"/>
   <text x="36" y="91" fill="#58a6ff" font-size="12">Invoices</text>
-  <rect x="16" y="112" width="148" height="28" rx="6" fill="none"/>
   <text x="36" y="131" fill="#484f58" font-size="12">Products</text>
-  <rect x="16" y="148" width="148" height="28" rx="6" fill="none"/>
   <text x="36" y="167" fill="#484f58" font-size="12">Clients</text>
 
-  <!-- Main content area -->
-  <rect x="180" y="40" width="660" height="460" fill="#0d1117"/>
+  <!-- Main content -->
   <text x="210" y="80" fill="#f0f6fc" font-size="16" font-weight="600">Invoices</text>
 
   <!-- Table header -->
-  <rect x="200" y="96" width="380" height="32" rx="4" fill="#161b22"/>
+  <rect x="200" y="96" width="520" height="32" rx="4" fill="#161b22"/>
   <text x="220" y="117" fill="#484f58" font-size="11">Date</text>
-  <text x="330" y="117" fill="#484f58" font-size="11">Customer</text>
+  <text x="370" y="117" fill="#484f58" font-size="11">Customer</text>
+  <text x="520" y="117" fill="#484f58" font-size="11">Amount</text>
 
-  <!-- Selected row - orange highlight -->
-  <rect x="198" y="128" width="384" height="44" rx="4" fill="#ffa6570a" stroke="#ffa657" stroke-width="2"/>
-  <text x="220" y="155" fill="#8b949e" font-size="12">Jan 12, 2026</text>
-  <text x="330" y="155" fill="#8b949e" font-size="12">Stone Store #1</text>
+  <!-- Row 1 — orange persistent highlight + label -->
+  <rect x="198" y="129" width="524" height="44" rx="3" fill="#ffa6570a" stroke="#ffa657" stroke-width="2"/>
+  <rect x="198" y="116" width="12" height="14" rx="2" fill="#ffa657"/>
+  <text x="204" y="127" text-anchor="middle" fill="#0d1117" font-size="8" font-weight="700">1</text>
+  <text x="220" y="156" fill="#e2e8f0" font-size="12">Jan 12, 2026</text>
+  <text x="370" y="156" fill="#e2e8f0" font-size="12">Stone Store #1</text>
+  <text x="520" y="156" fill="#e2e8f0" font-size="12">R$ 1.250,00</text>
 
-  <!-- Row 2 -->
-  <rect x="200" y="175" width="380" height="1" fill="#21262d"/>
-  <text x="220" y="202" fill="#484f58" font-size="12">Jan 10, 2026</text>
-  <text x="330" y="202" fill="#484f58" font-size="12">Stone Store #2</text>
+  <!-- Row 2 — orange highlight + label -->
+  <rect x="198" y="177" width="524" height="44" rx="3" fill="#ffa6570a" stroke="#ffa657" stroke-width="2"/>
+  <rect x="198" y="164" width="12" height="14" rx="2" fill="#ffa657"/>
+  <text x="204" y="175" text-anchor="middle" fill="#0d1117" font-size="8" font-weight="700">2</text>
+  <text x="220" y="204" fill="#e2e8f0" font-size="12">Jan 10, 2026</text>
+  <text x="370" y="204" fill="#e2e8f0" font-size="12">Stone Store #2</text>
+  <text x="520" y="204" fill="#e2e8f0" font-size="12">R$ 890,00</text>
 
-  <!-- Right panel -->
-  <rect x="590" y="48" width="246" height="446" rx="0" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <!-- Row 3 dim -->
+  <rect x="200" y="225" width="520" height="1" fill="#21262d"/>
+  <text x="220" y="252" fill="#3d444d" font-size="12">Jan 8, 2026</text>
+  <text x="370" y="252" fill="#3d444d" font-size="12">Stone Store #3</text>
+
+  <!-- Panel -->
+  <rect x="606" y="48" width="326" height="484" rx="12" fill="#161b22" stroke="#30363d" stroke-width="1"/>
 
   <!-- Panel header -->
-  <rect x="590" y="48" width="246" height="60" fill="#161b22"/>
-  <rect x="590" y="107" width="246" height="1" fill="#21262d"/>
+  <text x="622" y="72" fill="#f0f6fc" font-size="12" font-weight="700">Element Inspector</text>
+  <rect x="734" y="60" width="58" height="18" rx="9" fill="#21262d"/>
+  <text x="763" y="73" text-anchor="middle" fill="#484f58" font-size="10">2 selected</text>
+  <text x="914" y="72" text-anchor="middle" fill="#484f58" font-size="14">✕</text>
+  <rect x="606" y="84" width="326" height="1" fill="#21262d"/>
 
-  <!-- Component badge -->
-  <rect x="606" y="58" width="80" height="16" rx="4" fill="#58a6ff22" stroke="#58a6ff30" stroke-width="1"/>
-  <text x="646" y="70" text-anchor="middle" fill="#58a6ff" font-size="9" font-weight="600">INVOICES</text>
+  <!-- Item 1 -->
+  <rect x="606" y="84" width="326" height="102" fill="#161b22"/>
+  <text x="622" y="104" fill="#484f58" font-size="10">1.</text>
+  <text x="634" y="104" fill="#58a6ff" font-size="12" font-weight="700">&lt;InvoiceRow&gt;</text>
+  <!-- actions -->
+  <rect x="782" y="92" width="60" height="18" rx="5" fill="#21262d" stroke="#30363d" stroke-width="1"/>
+  <text x="812" y="105" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="600">↑ Parent</text>
+  <rect x="846" y="92" width="22" height="18" rx="5" fill="#21262d" stroke="#30363d" stroke-width="1"/>
+  <text x="857" y="105" text-anchor="middle" fill="#8b949e" font-size="10">✕</text>
+  <text x="622" y="120" fill="#3fb950" font-size="10">src/pages/invoices/components/invoice-row.tsx:8</text>
+  <text x="622" y="135" fill="#8b949e" font-size="10">&lt;tr .invoice-row&gt;</text>
+  <!-- note box -->
+  <rect x="622" y="142" width="294" height="34" rx="5" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
+  <text x="632" y="163" fill="#3d444d" font-size="10">Add a note…</text>
+  <rect x="606" y="186" width="326" height="1" fill="#21262d"/>
 
-  <!-- Component name + counter -->
-  <text x="606" y="96" fill="#58a6ff" font-size="13" font-weight="700">&lt;InvoiceRow&gt;</text>
-  <text x="718" y="96" fill="#484f58" font-size="10">1/4</text>
+  <!-- Item 2 -->
+  <text x="622" y="206" fill="#484f58" font-size="10">2.</text>
+  <text x="634" y="206" fill="#58a6ff" font-size="12" font-weight="700">&lt;InvoicesTable&gt;</text>
+  <rect x="782" y="194" width="60" height="18" rx="5" fill="#21262d" stroke="#30363d" stroke-width="1"/>
+  <text x="812" y="207" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="600">↑ Parent</text>
+  <rect x="846" y="194" width="22" height="18" rx="5" fill="#21262d" stroke="#30363d" stroke-width="1"/>
+  <text x="857" y="207" text-anchor="middle" fill="#8b949e" font-size="10">✕</text>
+  <text x="622" y="222" fill="#3fb950" font-size="10">src/pages/invoices/components/invoices-table.tsx:12</text>
+  <text x="622" y="237" fill="#8b949e" font-size="10">&lt;section .w-full&gt;</text>
+  <!-- note with text -->
+  <rect x="622" y="244" width="294" height="46" rx="5" fill="#0d1117" stroke="#1f6feb" stroke-width="1"/>
+  <text x="632" y="261" fill="#e2e8f0" font-size="10">the empty state here is broken</text>
+  <text x="632" y="278" fill="#e2e8f0" font-size="10">when there are no invoices</text>
+  <rect x="606" y="292" width="326" height="1" fill="#21262d"/>
 
-  <!-- Nav button -->
-  <rect x="606" y="114" width="214" height="26" rx="7" fill="#21262d" stroke="#30363d" stroke-width="1"/>
-  <text x="713" y="131" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="600">↑ Parent</text>
-
-  <!-- Breadcrumb -->
-  <text x="606" y="158" fill="#ffa657" font-size="10" font-weight="700">&lt;InvoiceRow&gt;</text>
-  <text x="683" y="158" fill="#484f58" font-size="10"> › &lt;InvoicesTable&gt;</text>
-
-  <!-- Divider -->
-  <rect x="606" y="165" width="214" height="1" fill="#21262d"/>
-
-  <!-- Snippet box -->
-  <rect x="606" y="172" width="214" height="168" rx="6" fill="#0d1117" stroke="#21262d" stroke-width="1"/>
-  <text x="618" y="189" fill="#3fb950" font-size="10" font-weight="600">[Component: &lt;InvoiceRow&gt;]</text>
-  <text x="618" y="205" fill="#8b949e" font-size="9.5">File: src/pages/invoices/</text>
-  <text x="618" y="218" fill="#8b949e" font-size="9.5">  components/invoice-row.tsx:8</text>
-  <text x="618" y="234" fill="#8b949e" font-size="9.5">Parent: &lt;InvoicesTable&gt;</text>
-  <text x="618" y="250" fill="#8b949e" font-size="9.5">Route: /invoices</text>
-  <text x="618" y="266" fill="#8b949e" font-size="9.5">DOM: &lt;tr class="invoice-row"&gt;</text>
-  <text x="618" y="282" fill="#8b949e" font-size="9.5">Selector: table &gt; tbody &gt; tr</text>
-  <text x="618" y="300" fill="#484f58" font-size="9">HTML:</text>
-  <text x="618" y="314" fill="#484f58" font-size="9">&lt;tr class="invoice-row"&gt;&lt;td&gt;Jan…</text>
-  <text x="618" y="328" fill="#484f58" font-size="9">&lt;td&gt;Stone Store #1&lt;/td&gt;…</text>
-
+  <!-- Footer -->
+  <rect x="606" y="488" width="326" height="1" fill="#21262d"/>
+  <!-- Add button -->
+  <rect x="622" y="498" width="90" height="26" rx="7" fill="#238636"/>
+  <text x="667" y="515" text-anchor="middle" fill="white" font-size="10" font-weight="600">+ Add Element</text>
+  <!-- Clear button -->
+  <rect x="718" y="498" width="60" height="26" rx="7" fill="#21262d" stroke="#30363d" stroke-width="1"/>
+  <text x="748" y="515" text-anchor="middle" fill="#8b949e" font-size="10" font-weight="600">Clear</text>
   <!-- Copy button -->
-  <rect x="606" y="350" width="214" height="32" rx="7" fill="#1f6feb"/>
-  <text x="713" y="371" text-anchor="middle" fill="white" font-size="11" font-weight="600">Copy context to Claude</text>
-
-  <!-- Close button -->
-  <text x="824" y="64" fill="#484f58" font-size="14" text-anchor="middle">✕</text>
+  <rect x="784" y="498" width="132" height="26" rx="7" fill="#1f6feb"/>
+  <text x="850" y="515" text-anchor="middle" fill="white" font-size="10" font-weight="600">Copy All</text>
 </svg>
