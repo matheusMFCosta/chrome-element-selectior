@@ -100,6 +100,23 @@
       white-space: pre-wrap; margin-bottom: 10px;
       max-height: 220px; overflow-y: auto;
     }
+    #__claude-panel .note-label {
+      font-size: 10px; font-weight: 600; letter-spacing: 0.08em;
+      text-transform: uppercase; color: #484f58; margin-bottom: 5px;
+    }
+    #__claude-panel .note-input {
+      width: 100%; padding: 8px 10px;
+      background: #0d1117; border: 1px solid #21262d;
+      border-radius: 6px; color: #e2e8f0;
+      font: 12px/1.5 "SF Mono", monospace;
+      resize: vertical; min-height: 60px;
+      margin-bottom: 10px; outline: none;
+      transition: border-color .15s;
+      box-sizing: border-box;
+    }
+    #__claude-panel .note-input:focus { border-color: #1f6feb; }
+    #__claude-panel .note-input::placeholder { color: #3d444d; }
+
     #__claude-panel .copy-btn {
       width: 100%; padding: 8px;
       background: #1f6feb; border: none; border-radius: 7px;
@@ -136,6 +153,8 @@
       <button class="nav-btn" id="__claude-nav-parent">↑ Parent</button>
     </div>
     <div class="breadcrumb" id="__claude-breadcrumb"></div>
+    <div class="note-label">Note</div>
+    <textarea class="note-input" id="__claude-note" placeholder="Write something about this element…"></textarea>
     <div class="snippet" id="__claude-snippet"></div>
     <button class="copy-btn" id="__claude-copy">Copy context to Claude</button>
   `;
@@ -316,6 +335,10 @@
     if (cssPath) snippet += `Selector: ${cssPath}\n`;
     if (htmlSnippet) snippet += `\nHTML:\n${htmlSnippet}`;
 
+    // Prepend note if present
+    const note = document.getElementById('__claude-note')?.value.trim();
+    if (note) snippet = `Note: ${note}\n\n` + snippet;
+
     document.getElementById('__claude-snippet').textContent = snippet;
 
     // Orange highlight
@@ -335,6 +358,10 @@
     const btn = document.getElementById('__claude-copy');
     btn.textContent = 'Copy context to Claude';
     btn.classList.remove('ok');
+
+    // Live preview: re-render snippet when note changes
+    const noteEl = document.getElementById('__claude-note');
+    noteEl.oninput = () => renderPanel();
 
     panel.classList.add('show');
   }
@@ -447,6 +474,8 @@
     currentStack = stack;
     currentIndex = 0;
     selectedEl = el;
+    const noteEl = document.getElementById('__claude-note');
+    if (noteEl) noteEl.value = '';
 
     // Deactivate hover mode after selection
     active = false;
