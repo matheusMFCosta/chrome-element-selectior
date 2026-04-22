@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      width: 220px;
+      padding: 16px;
+      background: #161b22;
+      color: #e2e8f0;
+      font-family: "SF Mono", "Fira Code", monospace;
+    }
+    h2 {
+      font-size: 13px;
+      font-weight: 700;
+      color: #58a6ff;
+      margin-bottom: 4px;
+    }
+    p {
+      font-size: 10px;
+      color: #484f58;
+      line-height: 1.6;
+      margin-bottom: 14px;
+    }
+    button {
+      width: 100%;
+      padding: 9px;
+      background: #1f6feb;
+      border: none;
+      border-radius: 7px;
+      color: #fff;
+      font: 600 11px "SF Mono", monospace;
+      cursor: pointer;
+      transition: background .15s;
+    }
+    button:hover { background: #388bfd; }
+    .hint {
+      margin-top: 10px;
+      font-size: 10px;
+      color: #3d444d;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <h2>Claude Selector</h2>
+  <p>Passa o mouse sobre qualquer elemento, clica para selecionar o componente React e copia o contexto para o Claude.</p>
+  <button id="btn-activate">Ativar na página</button>
+  <p class="hint">Cole o script de novo para desativar</p>
+  <script src="popup.js"></script>
+</body>
+</html>
