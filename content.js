@@ -162,7 +162,9 @@
     let node = fiber;
     while (node) {
       const name = node.type?.displayName || node.type?.name;
-      if (name && !['Router','Fragment','Suspense','StrictMode'].includes(name) && !name.startsWith('_')) {
+      // Include any named component — React convention is PascalCase (starts uppercase)
+      // Skip host elements (div, span…) which have lowercase string types
+      if (name && /^[A-Z]/.test(name)) {
         const src = node._debugSource;
         stack.push({
           name,
