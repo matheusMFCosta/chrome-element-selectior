@@ -259,9 +259,10 @@
       ? `&lt;${item.name}&gt;${counter}`
       : `&lt;${domEl?.tagName.toLowerCase() ?? 'element'}&gt;`;
 
-    // Nav parent button (only relevant with React)
+    // Nav parent button: disabled when we reach body/html
+    const parentEl = selectedEl?.parentElement;
     document.getElementById('__claude-nav-parent').disabled =
-      !hasReact || currentIndex >= currentStack.length - 1;
+      !parentEl || parentEl === document.body || parentEl === document.documentElement;
 
     // Breadcrumb
     const breadcrumbEl = document.getElementById('__claude-breadcrumb');
@@ -338,12 +339,15 @@
     panel.classList.add('show');
   }
 
-  // ── Nav: only parent ──────────────────────────────────────────────────────
+  // ── Nav: move selection to parent DOM element ─────────────────────────────
   document.getElementById('__claude-nav-parent').onclick = () => {
-    if (currentIndex < currentStack.length - 1) {
-      currentIndex++;
-      renderPanel();
-    }
+    const parent = selectedEl?.parentElement;
+    if (!parent || parent === document.body || parent === document.documentElement) return;
+
+    selectedEl = parent;
+    currentStack = getComponentStack(selectedEl);
+    currentIndex = 0;
+    renderPanel();
   };
 
   document.getElementById('__claude-close').onclick = () => {
