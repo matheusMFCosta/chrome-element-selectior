@@ -145,6 +145,7 @@
   let active = true;
   let currentStack = [];
   let currentIndex = 0;
+  let selectedEl = null; // raw DOM element clicked (used when no React)
 
   // ── Fiber utils ───────────────────────────────────────────────────────────
   function getFiberFromEl(el) {
@@ -183,6 +184,35 @@
     return null;
   }
 
+  // Build a readable CSS selector path for any DOM element
+  function getCssSelector(el) {
+    const parts = [];
+    let node = el;
+    while (node && node.tagName && node !== document.body) {
+      let sel = node.tagName.toLowerCase();
+      if (node.id) { sel += `#${node.id}`; parts.unshift(sel); break; }
+      const cls = [...node.classList].filter(Boolean).slice(0, 2);
+      if (cls.length) sel += `.${cls.join('.')}`;
+      parts.unshift(sel);
+      node = node.parentElement;
+      if (parts.length >= 5) { parts.unshift('…'); break; }
+    }
+    return parts.join(' > ');
+  }
+
+  // Get useful attributes from a DOM element (skip long/data attrs)
+  function getDomAttrs(el) {
+    const skip = new Set(['class', 'id', 'style']);
+    const attrs = [];
+    for (const { name, value } of el.attributes) {
+      if (skip.has(name)) continue;
+      const v = value.length > 50 ? value.slice(0, 50) + '…' : value;
+      attrs.push(`${name}="${v}"`);
+      if (attrs.length >= 5) break;
+    }
+    return attrs;
+  }
+
   function truncateHtml(el, maxLen = 400) {
     if (!el) return null;
     const clone = el.cloneNode(true);
@@ -199,51 +229,75 @@
 
   // ── Render panel ──────────────────────────────────────────────────────────
   function renderPanel() {
-    if (!currentStack.length) return;
+    const hasReact = currentStack.length > 0;
+    const item = hasReact ? currentStack[currentIndex] : null;
+    const domEl = hasReact ? getDomEl(item.fiber) : selectedEl;
 
-    const item = currentStack[currentIndex];
+    // Title
+    const titleEl = document.getElementById('__claude-comp-name');
+    titleEl.textContent = hasReact
+      ? `<${item.name}>`
+      : `<${domEl?.tagName.toLowerCase() ?? 'element'}>`;
 
-    document.getElementById('__claude-comp-name').textContent = `<${item.name}>`;
-    document.getElementById('__claude-nav-parent').disabled = currentIndex >= currentStack.length - 1;
+    // Nav parent button (only relevant with React)
+    document.getElementById('__claude-nav-parent').disabled =
+      !hasReact || currentIndex >= currentStack.length - 1;
 
     // Breadcrumb
-    const start = Math.max(0, currentIndex - 1);
-    const end = Math.min(currentStack.length, currentIndex + 4);
-    const crumbs = currentStack.slice(start, end).map((s, i) => {
-      const realIdx = start + i;
-      const label = `&lt;${s.name}&gt;`;
-      return realIdx === currentIndex
-        ? `<span class="cur">${label}</span>`
-        : `<span>${label}</span>`;
-    });
-    if (start > 0) crumbs.unshift('…');
-    if (end < currentStack.length) crumbs.push('…');
-    document.getElementById('__claude-breadcrumb').innerHTML = crumbs.join(' › ');
+    const breadcrumbEl = document.getElementById('__claude-breadcrumb');
+    if (hasReact) {
+      const start = Math.max(0, currentIndex - 1);
+      const end = Math.min(currentStack.length, currentIndex + 4);
+      const crumbs = currentStack.slice(start, end).map((s, i) => {
+        const realIdx = start + i;
+        const label = `&lt;${s.name}&gt;`;
+        return realIdx === currentIndex
+          ? `<span class="cur">${label}</span>`
+          : `<span>${label}</span>`;
+      });
+      if (start > 0) crumbs.unshift('…');
+      if (end < currentStack.length) crumbs.push('…');
+      breadcrumbEl.innerHTML = crumbs.join(' › ');
+    } else {
+      breadcrumbEl.innerHTML = `<span style="color:#484f58">DOM puro — sem componente React</span>`;
+    }
 
-    // DOM info
-    const domEl = getDomEl(item.fiber);
+    // DOM info (shared for both modes)
     const tag = domEl?.tagName.toLowerCase() ?? null;
     const elId = domEl?.id || null;
     const classes = domEl ? [...domEl.classList].filter(Boolean) : [];
+    const attrs = domEl ? getDomAttrs(domEl) : [];
+    const cssPath = domEl ? getCssSelector(domEl) : null;
     const htmlSnippet = truncateHtml(domEl);
 
-    // Snippet
-    const parent = currentStack[currentIndex + 1];
-    let snippet = `[Componente: <${item.name}>]\n`;
-    if (item.file) snippet += `Arquivo: ${item.file}\n`;
-    if (parent)    snippet += `Pai: <${parent.name}>\n`;
+    // Build snippet
+    let snippet = '';
+    if (hasReact) {
+      const parent = currentStack[currentIndex + 1];
+      snippet += `[Componente: <${item.name}>]\n`;
+      if (item.file) snippet += `Arquivo: ${item.file}\n`;
+      if (parent)    snippet += `Pai: <${parent.name}>\n`;
+    } else {
+      snippet += `[Elemento DOM]\n`;
+    }
+
     snippet += `Rota: ${window.location.pathname}\n`;
+    snippet += `URL: ${window.location.href}\n`;
+
     if (tag) {
       let domLine = `DOM: <${tag}`;
       if (elId) domLine += ` id="${elId}"`;
       if (classes.length) domLine += ` class="${classes.join(' ')}"`;
+      if (attrs.length) domLine += ` ${attrs.join(' ')}`;
       domLine += '>';
       snippet += domLine + '\n';
     }
+    if (cssPath) snippet += `Seletor: ${cssPath}\n`;
     if (htmlSnippet) snippet += `\nHTML:\n${htmlSnippet}`;
+
     document.getElementById('__claude-snippet').textContent = snippet;
 
-    // Orange highlight on selected component
+    // Orange highlight
     const domRect = domEl?.getBoundingClientRect();
     if (domRect) {
       highlight.className = 'selected';
@@ -330,12 +384,21 @@
 
     const stack = getComponentStack(el);
     const top = stack[0];
-    tooltip.innerHTML = top
-      ? `<div class="comp">&lt;${top.name}&gt;</div>
-         ${top.file ? `<div class="file">${top.file}</div>` : ''}
-         ${stack[1] ? `<div class="hint">em &lt;${stack[1].name}&gt;</div>` : ''}
-         <div class="hint" style="margin-top:6px">clique para selecionar</div>`
-      : `<div class="hint">${el.tagName.toLowerCase()} — sem componente React</div>`;
+    if (top) {
+      tooltip.innerHTML = `
+        <div class="comp">&lt;${top.name}&gt;</div>
+        ${top.file ? `<div class="file">${top.file}</div>` : ''}
+        ${stack[1] ? `<div class="hint">em &lt;${stack[1].name}&gt;</div>` : ''}
+        <div class="hint" style="margin-top:6px">clique para selecionar</div>`;
+    } else {
+      const tag = el.tagName.toLowerCase();
+      const id = el.id ? `#${el.id}` : '';
+      const cls = [...el.classList].slice(0, 2).map(c => `.${c}`).join('');
+      tooltip.innerHTML = `
+        <div class="comp">&lt;${tag}${id}${cls}&gt;</div>
+        <div class="hint">elemento DOM</div>
+        <div class="hint" style="margin-top:6px">clique para selecionar</div>`;
+    }
 
     const tx = Math.min(e.clientX + 14, window.innerWidth - 360);
     const ty = Math.max(e.clientY - 10, 4);
@@ -356,10 +419,10 @@
     e.stopPropagation();
 
     const stack = getComponentStack(el);
-    if (!stack.length) return;
 
     currentStack = stack;
     currentIndex = 0;
+    selectedEl = el;
 
     // Deactivate hover mode after selection
     active = false;
