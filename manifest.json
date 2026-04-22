@@ -5,8 +5,10 @@
   "description": "Selecione componentes React e copie contexto para o Claude",
   "permissions": ["activeTab", "scripting", "clipboardWrite"],
   "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
-    "default_popup": "popup.html",
     "default_title": "Claude Element Selector"
   }
 }

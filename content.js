@@ -156,15 +156,30 @@
   }
 
   function getComponentStack(el) {
-    let fiber = getFiberFromEl(el);
-    if (!fiber) return [];
+    // Try to get fiber from the element or walk up the DOM until we find one
+    let startFiber = null;
+    let domNode = el;
+    while (domNode && !startFiber) {
+      startFiber = getFiberFromEl(domNode);
+      domNode = domNode.parentElement;
+    }
+    if (!startFiber) return [];
+
     const stack = [];
-    let node = fiber;
+    const seen = new WeakSet();
+    let node = startFiber;
+
     while (node) {
-      const name = node.type?.displayName || node.type?.name;
-      // Include any named component — React convention is PascalCase (starts uppercase)
-      // Skip host elements (div, span…) which have lowercase string types
-      if (name && /^[A-Z]/.test(name)) {
+      // Get component name: function components have type.name, class components too,
+      // forwardRef/memo have displayName or inner render.name
+      const name =
+        node.type?.displayName ||
+        node.type?.name ||
+        node.type?.render?.displayName ||
+        node.type?.render?.name;
+
+      if (name && typeof name === 'string' && /^[A-Z]/.test(name) && !seen.has(node)) {
+        seen.add(node);
         const src = node._debugSource;
         stack.push({
           name,
@@ -235,11 +250,14 @@
     const item = hasReact ? currentStack[currentIndex] : null;
     const domEl = hasReact ? getDomEl(item.fiber) : selectedEl;
 
-    // Title
+    // Title + position counter
     const titleEl = document.getElementById('__claude-comp-name');
-    titleEl.textContent = hasReact
-      ? `<${item.name}>`
-      : `<${domEl?.tagName.toLowerCase() ?? 'element'}>`;
+    const counter = hasReact && currentStack.length > 1
+      ? ` <span style="color:#484f58;font-size:10px;font-weight:400">${currentIndex + 1}/${currentStack.length}</span>`
+      : '';
+    titleEl.innerHTML = hasReact
+      ? `&lt;${item.name}&gt;${counter}`
+      : `&lt;${domEl?.tagName.toLowerCase() ?? 'element'}&gt;`;
 
     // Nav parent button (only relevant with React)
     document.getElementById('__claude-nav-parent').disabled =
