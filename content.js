@@ -23,6 +23,14 @@
       0%, 100% { box-shadow: 0 0 0 0 #23863680; }
       50%       { box-shadow: 0 0 0 6px #23863600; }
     }
+    #__es-badge.photo {
+      background: #8957e5;
+      animation: es-pulse-photo 1.2s infinite;
+    }
+    @keyframes es-pulse-photo {
+      0%, 100% { box-shadow: 0 0 0 0 #8957e580; }
+      50%       { box-shadow: 0 0 0 6px #8957e500; }
+    }
 
     #__es-hover {
       position: fixed; pointer-events: none; z-index: 2147483645;
@@ -125,6 +133,63 @@
       color: #484f58; font-size: 11px; line-height: 2;
     }
 
+    .p-options {
+      padding: 10px 16px 8px;
+      border-top: 1px solid #21262d;
+      flex-shrink: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .es-opt-label {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      font-size: 10px;
+      color: #8b949e;
+      line-height: 1.45;
+      cursor: pointer;
+      user-select: none;
+    }
+    .es-opt-label input { margin-top: 2px; flex-shrink: 0; accent-color: #1f6feb; }
+    .es-opt-label.es-disabled { opacity: 0.45; pointer-events: none; }
+    .es-opt-hint {
+      font-size: 9px;
+      color: #484f58;
+      line-height: 1.4;
+    }
+    .es-shot-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .es-btn-shot {
+      background: #21262d;
+      border: 1px solid #30363d;
+      border-radius: 6px;
+      color: #e2e8f0;
+      font: 600 10px "SF Mono", monospace;
+      padding: 6px 10px;
+      cursor: pointer;
+      transition: background .15s, border-color .15s;
+    }
+    .es-btn-shot:hover { background: #2d333b; border-color: #484f58; }
+    .es-btn-shot:disabled { opacity: 0.45; cursor: default; }
+    .es-btn-shot.active {
+      border-color: #8957e5;
+      color: #d2a8ff;
+      background: #2d2640;
+    }
+    .es-shot-status {
+      font-size: 9px;
+      color: #3fb950;
+      flex: 1;
+      min-width: 0;
+      line-height: 1.3;
+    }
+    .es-shot-status.err { color: #f85149; }
+
     .p-footer {
       display: flex; gap: 6px; padding: 12px 16px;
       border-top: 1px solid #21262d; flex-shrink: 0;
@@ -162,6 +227,21 @@
     <div id="__es-list">
       <div id="__es-empty">Click <b>Add Element</b> then click<br>anything on the page to select it</div>
     </div>
+    <div id="__es-options" class="p-options" aria-label="Opções de cópia e captura">
+      <label class="es-opt-label" for="__es-full-html">
+        <input type="checkbox" id="__es-full-html" />
+        <span>HTML completo do componente (até ~50k caracteres em vez do trecho curto)</span>
+      </label>
+      <div class="es-shot-row">
+        <button type="button" class="es-btn-shot" id="__es-screenshot" aria-pressed="false" aria-label="Modo foto: escolher elemento na página">
+          Foto de elemento…
+        </button>
+        <span class="es-shot-status" id="__es-shot-status" role="status"></span>
+      </div>
+      <div class="es-opt-hint">
+        Ative o modo, clique no elemento: a extensão tira um print da aba (só o que está visível), recorta esse elemento e copia o PNG. O painel some na hora do print. <kbd>Esc</kbd> cancela.
+      </div>
+    </div>
     <div class="p-footer">
       <button class="p-btn add"   id="__es-add">+ Add Element</button>
       <button class="p-btn clear" id="__es-clear">Clear</button>
@@ -172,7 +252,8 @@
 
   // ── State ─────────────────────────────────────────────────────────────────
   let picking = false; // true = hover mode active, waiting for a click
-  // selections[i] = { el, stack, hasReact, tag, elId, classes, attrs, cssPath, html, note, hDiv, lDiv }
+  let screenshotPicking = false; // true = escolher elemento para foto → clipboard PNG
+  // selections[i] = { el, stack, hasReact, tag, elId, classes, attrs, cssPath, note, hDiv, lDiv }
   let selections = [];
 
   // ── Fiber & DOM utils ─────────────────────────────────────────────────────
@@ -203,6 +284,14 @@
     let n = fiber;
     while (n) { if (n.stateNode instanceof Element) return n.stateNode; n = n.child; }
     return null;
+  }
+
+  function getDomRootForCtx(ctx) {
+    if (!ctx) return null;
+    if (ctx.hasReact && ctx.stack?.length) {
+      return domFromFiber(ctx.stack[0].fiber) ?? ctx.el;
+    }
+    return ctx.el;
   }
 
   function cssSelector(el) {
@@ -253,13 +342,18 @@
       classes: domEl ? [...domEl.classList].filter(Boolean) : [],
       attrs: domEl ? domAttrs(domEl) : [],
       cssPath: domEl ? cssSelector(domEl) : null,
-      html: truncHtml(domEl),
       note: '',
       hDiv: null, lDiv: null,
     };
   }
 
-  function buildSnippet(ctx) {
+  function htmlForCtx(ctx, fullComponent) {
+    const root = getDomRootForCtx(ctx);
+    const max = fullComponent ? 50000 : 300;
+    return truncHtml(root, max);
+  }
+
+  function buildSnippet(ctx, { fullComponent = false } = {}) {
     let s = '';
     if (ctx.hasReact) {
       const [top, parent] = ctx.stack;
@@ -279,7 +373,8 @@
       s += d + '>\n';
     }
     if (ctx.cssPath) s += `Selector: ${ctx.cssPath}\n`;
-    if (ctx.html) s += `\nHTML:\n${ctx.html}`;
+    const html = htmlForCtx(ctx, fullComponent);
+    if (html) s += `\nHTML:\n${html}`;
     if (ctx.note?.trim()) s = `Note: ${ctx.note.trim()}\n\n` + s;
     return s;
   }
@@ -326,16 +421,60 @@
   window.addEventListener('resize', refreshHighlights);
 
   // ── Picking mode ──────────────────────────────────────────────────────────
+  const updateScreenshotButtonVisual = () => {
+    const btn = document.getElementById('__es-screenshot');
+    if (!btn) return;
+    btn.classList.toggle('active', screenshotPicking);
+    btn.setAttribute('aria-pressed', screenshotPicking ? 'true' : 'false');
+    btn.textContent = screenshotPicking ? 'Cancelar foto' : 'Foto de elemento…';
+  };
+
+  const setScreenshotPicking = (val) => {
+    screenshotPicking = !!val;
+    if (screenshotPicking) {
+      picking = false;
+      const addBtn = document.getElementById('__es-add');
+      if (addBtn) {
+        addBtn.textContent = '+ Add Element';
+        addBtn.classList.remove('picking');
+      }
+      badge.textContent = '⬡ Foto…';
+      badge.className = 'photo';
+      const st = document.getElementById('__es-shot-status');
+      if (st) {
+        st.textContent = 'Clique no elemento desejado.';
+        st.classList.remove('err');
+      }
+    } else {
+      badge.classList.remove('photo');
+      badge.textContent = picking ? '⬡ Picking…' : '⬡ Element Selector';
+      badge.className = picking ? 'picking' : 'off';
+      hover.style.display = 'none';
+      tooltip.style.display = 'none';
+    }
+    updateScreenshotButtonVisual();
+  };
+
   function setPicking(val) {
     picking = val;
-    badge.textContent = val ? '⬡ Picking…' : '⬡ Element Selector';
-    badge.className = val ? 'picking' : 'off';
+    if (val) screenshotPicking = false;
     const addBtn = document.getElementById('__es-add');
     if (addBtn) {
       addBtn.textContent = val ? '● Picking…' : '+ Add Element';
       addBtn.classList.toggle('picking', val);
     }
-    if (!val) { hover.style.display = 'none'; tooltip.style.display = 'none'; }
+    if (screenshotPicking) {
+      badge.textContent = '⬡ Foto…';
+      badge.className = 'photo';
+    } else {
+      badge.textContent = val ? '⬡ Picking…' : '⬡ Element Selector';
+      badge.className = val ? 'picking' : 'off';
+    }
+    updateScreenshotButtonVisual();
+    if (!val && !screenshotPicking) {
+      hover.style.display = 'none';
+      tooltip.style.display = 'none';
+    }
   }
 
   // ── Render panel ──────────────────────────────────────────────────────────
@@ -405,7 +544,17 @@
   }
 
   // ── Panel events ──────────────────────────────────────────────────────────
-  document.getElementById('__es-close').onclick = () => panel.classList.remove('show');
+  document.getElementById('__es-close').onclick = () => {
+    if (screenshotPicking) {
+      setScreenshotPicking(false);
+      const st = document.getElementById('__es-shot-status');
+      if (st) {
+        st.textContent = 'Modo foto cancelado.';
+        st.classList.remove('err');
+      }
+    }
+    panel.classList.remove('show');
+  };
 
   document.getElementById('__es-add').onclick = () => {
     if (picking) { setPicking(false); return; }
@@ -417,27 +566,263 @@
     selections.forEach(removeHighlight);
     selections = [];
     setPicking(false);
+    setScreenshotPicking(false);
+    const st = document.getElementById('__es-shot-status');
+    if (st) {
+      st.textContent = '';
+      st.classList.remove('err');
+    }
     renderPanel();
   };
 
-  document.getElementById('__es-copy').onclick = () => {
-    const parts = selections.map((ctx, i) => {
-      const name = ctx.hasReact ? `<${ctx.stack[0].name}>` : `<${ctx.tag}>`;
-      return `${'─'.repeat(40)}\nSelection ${i+1}: ${name}\n${'─'.repeat(40)}\n${buildSnippet(ctx)}`;
+  const hideExtensionUiForCapture = () => {
+    [badge, panel, hover, tooltip].forEach((el) => {
+      el.dataset.esCaptureVis = el.style.visibility || '';
+      el.style.visibility = 'hidden';
     });
-    navigator.clipboard.writeText(parts.join('\n\n')).then(() => {
-      const btn = document.getElementById('__es-copy');
-      btn.textContent = '✓ Copied!';
-      btn.classList.add('ok');
-      setTimeout(() => { btn.textContent = 'Copy All'; btn.classList.remove('ok'); }, 2000);
+    selections.forEach((ctx) => {
+      if (ctx.hDiv) {
+        ctx.hDiv.dataset.esCaptureVis = ctx.hDiv.style.visibility || '';
+        ctx.hDiv.style.visibility = 'hidden';
+      }
+      if (ctx.lDiv) {
+        ctx.lDiv.dataset.esCaptureVis = ctx.lDiv.style.visibility || '';
+        ctx.lDiv.style.visibility = 'hidden';
+      }
     });
   };
 
-  // Badge click → toggle picking
-  badge.onclick = () => setPicking(!picking);
+  const restoreExtensionUiAfterCapture = () => {
+    [badge, panel, hover, tooltip].forEach((el) => {
+      if (Object.prototype.hasOwnProperty.call(el.dataset, 'esCaptureVis')) {
+        el.style.visibility = el.dataset.esCaptureVis;
+        delete el.dataset.esCaptureVis;
+      }
+    });
+    selections.forEach((ctx) => {
+      if (ctx.hDiv && Object.prototype.hasOwnProperty.call(ctx.hDiv.dataset, 'esCaptureVis')) {
+        ctx.hDiv.style.visibility = ctx.hDiv.dataset.esCaptureVis;
+        delete ctx.hDiv.dataset.esCaptureVis;
+      }
+      if (ctx.lDiv && Object.prototype.hasOwnProperty.call(ctx.lDiv.dataset, 'esCaptureVis')) {
+        ctx.lDiv.style.visibility = ctx.lDiv.dataset.esCaptureVis;
+        delete ctx.lDiv.dataset.esCaptureVis;
+      }
+    });
+  };
+
+  const cropPngFromDataUrl = (dataUrl, rect) =>
+    new Promise((resolve, reject) => {
+      const img = new Image();
+      img.onload = () => {
+        try {
+          const vw = window.innerWidth;
+          const vh = window.innerHeight;
+          if (!vw || !vh) {
+            reject(new Error('Viewport inválido.'));
+            return;
+          }
+          const scaleX = img.naturalWidth / vw;
+          const scaleY = img.naturalHeight / vh;
+          const ix = Math.round(rect.left * scaleX);
+          const iy = Math.round(rect.top * scaleY);
+          const iw = Math.round(rect.width * scaleX);
+          const ih = Math.round(rect.height * scaleY);
+          const sx = Math.max(0, Math.min(ix, img.naturalWidth - 1));
+          const sy = Math.max(0, Math.min(iy, img.naturalHeight - 1));
+          const sw = Math.min(Math.max(1, iw), img.naturalWidth - sx);
+          const sh = Math.min(Math.max(1, ih), img.naturalHeight - sy);
+          const canvas = document.createElement('canvas');
+          canvas.width = sw;
+          canvas.height = sh;
+          const c = canvas.getContext('2d');
+          if (!c) {
+            reject(new Error('Canvas indisponível.'));
+            return;
+          }
+          c.drawImage(img, sx, sy, sw, sh, 0, 0, sw, sh);
+          canvas.toBlob((b) => {
+            if (b) resolve(b);
+            else reject(new Error('Falha ao gerar PNG.'));
+          }, 'image/png');
+        } catch (e) {
+          reject(e);
+        }
+      };
+      img.onerror = () => reject(new Error('Não foi possível carregar a captura.'));
+      img.src = dataUrl;
+    });
+
+  const handleScreenshotElementClick = async (targetEl) => {
+    const status = document.getElementById('__es-shot-status');
+    const btn = document.getElementById('__es-screenshot');
+
+    if (!chrome?.runtime?.sendMessage) {
+      if (status) {
+        status.textContent = 'API da extensão indisponível nesta página.';
+        status.classList.add('err');
+      }
+      setScreenshotPicking(false);
+      return;
+    }
+
+    setScreenshotPicking(false);
+    if (status) {
+      status.textContent = 'Gerando foto…';
+      status.classList.remove('err');
+    }
+    if (btn) btn.disabled = true;
+
+    let res;
+    try {
+      if (!targetEl || !(targetEl instanceof Element)) {
+        throw new Error('Elemento inválido.');
+      }
+
+      hideExtensionUiForCapture();
+      await new Promise((r) => setTimeout(r, 160));
+
+      const rect = targetEl.getBoundingClientRect();
+      if (rect.width < 1 || rect.height < 1) {
+        throw new Error('Área do elemento é muito pequena.');
+      }
+
+      res = await new Promise((resolve) => {
+        chrome.runtime.sendMessage({ type: 'CAPTURE_VISIBLE_TAB' }, resolve);
+      });
+
+      if (!res?.ok) {
+        throw new Error(res?.error || 'Falha na captura da aba.');
+      }
+
+      const blob = await cropPngFromDataUrl(res.dataUrl, rect);
+      await navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]);
+
+      if (status) {
+        status.textContent = 'Imagem copiada (PNG).';
+        status.classList.remove('err');
+      }
+    } catch (err) {
+      if (status) {
+        status.textContent = err?.message || String(err);
+        status.classList.add('err');
+      }
+    } finally {
+      restoreExtensionUiAfterCapture();
+      if (btn) btn.disabled = false;
+    }
+  };
+
+  document.getElementById('__es-screenshot').onclick = () => {
+    const status = document.getElementById('__es-shot-status');
+    if (!chrome?.runtime?.sendMessage) {
+      if (status) {
+        status.textContent = 'API da extensão indisponível nesta página.';
+        status.classList.add('err');
+      }
+      return;
+    }
+    if (screenshotPicking) {
+      setScreenshotPicking(false);
+      if (status) {
+        status.textContent = 'Modo foto cancelado.';
+        status.classList.remove('err');
+      }
+      return;
+    }
+    setScreenshotPicking(true);
+  };
+
+  document.getElementById('__es-copy').onclick = async () => {
+    const fullComponent = document.getElementById('__es-full-html')?.checked ?? false;
+
+    const parts = selections.map((ctx, i) => {
+      const name = ctx.hasReact ? `<${ctx.stack[0].name}>` : `<${ctx.tag}>`;
+      return `${'─'.repeat(40)}\nSelection ${i+1}: ${name}\n${'─'.repeat(40)}\n${buildSnippet(ctx, { fullComponent })}`;
+    });
+    const text = parts.join('\n\n');
+
+    const btn = document.getElementById('__es-copy');
+    const resetBtn = () => {
+      setTimeout(() => {
+        btn.textContent = 'Copy All';
+        btn.classList.remove('ok');
+      }, 2000);
+    };
+
+    const markOk = (label) => {
+      btn.textContent = label;
+      btn.classList.add('ok');
+      resetBtn();
+    };
+
+    try {
+      await navigator.clipboard.writeText(text);
+      markOk('✓ Copied!');
+    } catch (err) {
+      btn.textContent = 'Erro ao copiar';
+      btn.classList.remove('ok');
+      setTimeout(() => {
+        btn.textContent = 'Copy All';
+      }, 2500);
+      console.error(err);
+    }
+  };
+
+  // Badge click → toggle picking (ou cancelar modo foto)
+  badge.onclick = () => {
+    if (screenshotPicking) {
+      setScreenshotPicking(false);
+      const st = document.getElementById('__es-shot-status');
+      if (st) {
+        st.textContent = 'Modo foto cancelado.';
+        st.classList.remove('err');
+      }
+      return;
+    }
+    setPicking(!picking);
+  };
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key !== 'Escape') return;
+    if (!screenshotPicking) return;
+    e.preventDefault();
+    setScreenshotPicking(false);
+    const st = document.getElementById('__es-shot-status');
+    if (st) {
+      st.textContent = 'Modo foto cancelado.';
+      st.classList.remove('err');
+    }
+  }, true);
 
   // ── Hover ─────────────────────────────────────────────────────────────────
   document.addEventListener('mousemove', (e) => {
+    if (screenshotPicking) {
+      if (panel.contains(e.target) || e.target === badge) {
+        tooltip.style.display = 'none';
+        hover.style.display = 'none';
+        return;
+      }
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      if (!el || el === badge || panel.contains(el)) {
+        tooltip.style.display = 'none';
+        hover.style.display = 'none';
+        return;
+      }
+      const r = el.getBoundingClientRect();
+      hover.style.cssText = `
+      position:fixed; pointer-events:none; z-index:2147483645;
+      outline:2px solid #a371f7; background:#8957e526; border-radius:3px;
+      transition:top .05s,left .05s,width .05s,height .05s; display:block;
+      top:${r.top}px; left:${r.left}px; width:${r.width}px; height:${r.height}px;
+    `;
+      tooltip.innerHTML = `
+        <div class="t-comp">Foto deste retângulo</div>
+        <div class="t-hint">Clique para copiar PNG na área de transferência</div>`;
+      const tx = Math.min(e.clientX + 14, window.innerWidth - 360);
+      tooltip.style.cssText += `left:${tx}px; top:${Math.max(e.clientY - 10, 4)}px; display:block;`;
+      return;
+    }
     if (!picking) return;
     if (panel.contains(e.target) || e.target === badge) {
       tooltip.style.display = 'none'; hover.style.display = 'none'; return;
@@ -472,8 +857,17 @@
     tooltip.style.cssText += `left:${tx}px; top:${Math.max(e.clientY-10,4)}px; display:block;`;
   }, true);
 
-  // ── Click → add selection ─────────────────────────────────────────────────
+  // ── Click → add selection ou foto de elemento ─────────────────────────────
   document.addEventListener('click', (e) => {
+    if (screenshotPicking) {
+      if (e.target === badge || panel.contains(e.target)) return;
+      const shotEl = document.elementFromPoint(e.clientX, e.clientY);
+      if (!shotEl || shotEl === badge || panel.contains(shotEl)) return;
+      e.preventDefault();
+      e.stopPropagation();
+      void handleScreenshotElementClick(shotEl);
+      return;
+    }
     if (!picking) return;
     if (e.target === badge || panel.contains(e.target)) return;
     const el = document.elementFromPoint(e.clientX, e.clientY);
